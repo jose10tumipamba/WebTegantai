@@ -1,4 +1,4 @@
-CREATE DATABASE  system_TLC;
+CREATE DATABASE system_TLC;
 USE system_TLC;
 
 -- Tabla principal: Archivos (Información general)
@@ -8,8 +8,10 @@ CREATE TABLE IF NOT EXISTS archivosTLC (
     conflicto VARCHAR(255) NOT NULL,
     descripcion TEXT NOT NULL,
     lugar VARCHAR(255) NOT NULL,
-    fecha DATE NOT NULL  -- Modificado para permitir entrada manual
+    fecha DATE NOT NULL  -- Permite ingreso manual de la fecha
 );
+ALTER TABLE archivosTLC ADD COLUMN archivo TEXT NOT NULL;
+
 
 -- Tabla de Formatos (Define los tipos de archivo)
 CREATE TABLE IF NOT EXISTS formatoTLC (
@@ -22,7 +24,7 @@ CREATE TABLE IF NOT EXISTS multimediaTLC (
     id INT AUTO_INCREMENT PRIMARY KEY,
     archivo_id INT,
     formato_id INT,
-    ruta VARCHAR(255) NOT NULL,
+    ruta TEXT NOT NULL, -- Cambiado a TEXT si las rutas son largas
     FOREIGN KEY (archivo_id) REFERENCES archivosTLC(id) ON DELETE CASCADE,
     FOREIGN KEY (formato_id) REFERENCES formatoTLC(id) ON DELETE CASCADE
 );
