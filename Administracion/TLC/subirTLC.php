@@ -1,8 +1,11 @@
 <?php
+
 $host = "localhost";
 $user = "root"; 
 $pass = ""; 
 $dbname = "system_TLC"; 
+
+$conexion = new mysqli('localhost', 'root', '', 'system_TLC');
 
 if ($conexion->connect_error) {
     die("Conexión fallida: " . $conexion->connect_error);

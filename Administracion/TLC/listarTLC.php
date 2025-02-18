@@ -6,7 +6,9 @@ if ($conexion->connect_error) {
 }
 
 // Consulta para obtener los archivos
-$sql = "SELECT id, nombre, conflicto, descripcion, lugar, fecha FROM archivosTLC ORDER BY fecha DESC";
+
+$sql = "SELECT id, nombre, conflicto, descripcion, lugar,  fecha FROM archivosTLC ORDER BY fecha DESC";
+
 $resultado = $conexion->query($sql);
 
 // Verificar si hay resultados
