@@ -1,13 +1,6 @@
-function confirmarEliminacion(id) {
-    let confirmar = confirm("¿Estás seguro de que deseas eliminar este archivo?");
-    if (confirmar) {
-        window.location.href = 'eliminarTLC.php?id=' + id;
-    }
-}
-
 document.getElementById("formSubida").addEventListener("submit", function(e) {
-    e.preventDefault(); // Evitar recarga
-
+    e.preventDefault();
+    
     let formData = new FormData(this);
     let mensaje = document.getElementById("mensaje");
 
@@ -18,11 +11,12 @@ document.getElementById("formSubida").addEventListener("submit", function(e) {
     .then(response => response.text())
     .then(data => {
         mensaje.innerHTML = data;
-        mensaje.style.color = "green";
+        mensaje.style.color = data.includes("Error") ? "red" : "green";
         actualizarListaArchivos();
-        this.reset(); // Limpiar formulario tras subir archivo
+        this.reset();
     })
     .catch(error => {
+        console.error("Error:", error);
         mensaje.innerHTML = "Error al subir el archivo.";
         mensaje.style.color = "red";
     });
@@ -35,3 +29,10 @@ function actualizarListaArchivos() {
         document.getElementById("contenidoTabla").innerHTML = data;
     });
 }
+
+function recargarDespuesDeEnviar() {
+    setTimeout(function() {
+        location.reload();
+    }, 500); // Recarga la página después de 0.5 segundos
+}
+

@@ -1,76 +1,95 @@
 <?php
-$host = "localhost";
-$user = "root";
-$pass = "";
-$dbname = "system_TLC";
-
-$conexion = new mysqli($host, $user, $pass, $dbname);
-
-if ($conexion->connect_error) {
-    die("Conexión fallida: " . $conexion->connect_error);
-}
+include 'dbTLC.php'; // Conectar con la base de datos
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Sanitizar entradas de usuario
-    $nombre = mysqli_real_escape_string($conexion, $_POST['nombre']);
-    $conflicto = mysqli_real_escape_string($conexion, $_POST['conflicto']);
-    $descripcion = mysqli_real_escape_string($conexion, $_POST['descripcion']);
-    $lugar = mysqli_real_escape_string($conexion, $_POST['lugar']);
-    $fecha = $_POST['fecha'];
-    $formato = $_POST['formato'];
+    try {
+        // Validación y sanitización de datos
+        $nombre = trim($_POST['nombre']);
+        $conflicto = trim($_POST['conflicto']);
+        $descripcion = trim($_POST['descripcion']);
+        $lugar = trim($_POST['lugar']);
+        $fecha = trim($_POST['fecha']);
 
-    // Manejo del archivo
-    $archivo = $_FILES['archivo']['name'];
-    $ruta_temporal = $_FILES['archivo']['tmp_name'];
-    $ruta_destino = 'uploads/' . basename($archivo);
-
-    // Validación de tipo de archivo
-    $tipos_permitidos = ['image/jpeg', 'image/png', 'application/pdf']; // Tipos permitidos
-    $max_tamano = 10 * 1024 * 1024; // Tamaño máximo de archivo en bytes (10MB)
-    if (in_array($_FILES['archivo']['type'], $tipos_permitidos)) {
-        if ($_FILES['archivo']['size'] <= $max_tamano) {
-            if (move_uploaded_file($ruta_temporal, $ruta_destino)) {
-                // Usar prepared statements para evitar inyecciones SQL
-                $stmt = $conexion->prepare("INSERT INTO archivosTLC (nombre, conflicto, descripcion, lugar, fecha, archivo_ruta) VALUES (?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("ssssss", $nombre, $conflicto, $descripcion, $lugar, $fecha, $ruta_destino);
-                if ($stmt->execute()) {
-                    $archivo_id = $stmt->insert_id;
-
-                    // Obtener el ID del formato
-                    $sql_formato = "SELECT id FROM formatoTLC WHERE tipo = ?";
-                    $stmt_formato = $conexion->prepare($sql_formato);
-                    $stmt_formato->bind_param("s", $formato);
-                    $stmt_formato->execute();
-                    $result = $stmt_formato->get_result();
-
-                    if ($result->num_rows > 0) {
-                        $formato_id = $result->fetch_assoc()['id'];
-
-                        // Insertar en multimediaTLC
-                        $sql_multimedia = "INSERT INTO multimediaTLC (archivo_id, formato_id, ruta) VALUES (?, ?, ?)";
-                        $stmt_multimedia = $conexion->prepare($sql_multimedia);
-                        $stmt_multimedia->bind_param("iis", $archivo_id, $formato_id, $ruta_destino);
-                        if ($stmt_multimedia->execute()) {
-                            echo "Archivo subido con éxito.";
-                        } else {
-                            echo "Error al insertar en multimedia: " . $conexion->error;
-                        }
-                    } else {
-                        echo "Error: Formato no encontrado.";
-                    }
-                } else {
-                    echo "Error al subir el archivo a la base de datos: " . $conexion->error;
-                }
-            } else {
-                echo "Error al mover el archivo. Verifique los permisos de la carpeta de destino.";
-            }
-        } else {
-            echo "El archivo es demasiado grande. El tamaño máximo permitido es " . ($max_tamano / 1024 / 1024) . " MB.";
+        // Validar el formato_id
+        if (!isset($_POST['formato']) || !is_numeric($_POST['formato'])) {
+            throw new Exception("Error: Formato inválido.");
         }
-    } else {
-        echo "Tipo de archivo no permitido. Solo se permiten archivos JPEG, PNG o PDF.";
+        $formato_id = (int)$_POST['formato'];
+
+        // Verificar si el formato_id existe en la base de datos
+        $stmtFormato = $conn->prepare("SELECT id FROM formatos WHERE id = ?");
+        $stmtFormato->bind_param("i", $formato_id);
+        $stmtFormato->execute();
+        $resultadoFormato = $stmtFormato->get_result();
+        if ($resultadoFormato->num_rows == 0) {
+            throw new Exception("Error: El formato seleccionado no es válido.");
+        }
+        $stmtFormato->close();
+
+        // Validar la subida de archivos
+        if (!isset($_FILES['archivo']) || $_FILES['archivo']['error'] !== UPLOAD_ERR_OK) {
+            throw new Exception("Error: No se subió ningún archivo o hubo un problema.");
+        }
+
+        // Verificar tamaño del archivo (5MB límite)
+        if ($_FILES['archivo']['size'] > 5 * 1024 * 1024) {
+            throw new Exception("Error: El archivo es demasiado grande (Máx: 5MB).");
+        }
+
+        // Directorio de almacenamiento
+        $upload_dir = 'uploads/';
+        if (!is_dir($upload_dir) && !mkdir($upload_dir, 0777, true)) {
+            throw new Exception("Error: No se pudo crear el directorio de almacenamiento.");
+        }
+
+        // Obtener detalles del archivo y limpiar el nombre
+        $archivo = $_FILES['archivo'];
+        $ext = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
+        $nombreArchivo = time() . "_" . preg_replace("/[^a-zA-Z0-9.-]/", "_", pathinfo($archivo['name'], PATHINFO_FILENAME)) . "." . $ext;
+        $rutaArchivo = $upload_dir . $nombreArchivo;
+
+        // Validar tipos de archivos permitidos
+        $formatos_permitidos = ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'mp4', 'mp3'];
+        if (!in_array($ext, $formatos_permitidos)) {
+            throw new Exception("Error: Tipo de archivo no permitido.");
+        }
+
+        // Verificar si el archivo ya existe en la base de datos
+        $stmtCheck = $conn->prepare("SELECT id FROM archivos WHERE archivo = ?");
+        $stmtCheck->bind_param("s", $rutaArchivo);
+        $stmtCheck->execute();
+        $resultadoCheck = $stmtCheck->get_result();
+        if ($resultadoCheck->num_rows > 0) {
+            throw new Exception("Error: El archivo ya existe en la base de datos.");
+        }
+        $stmtCheck->close();
+
+        // Mover el archivo al directorio de almacenamiento
+        if (!move_uploaded_file($archivo['tmp_name'], $rutaArchivo)) {
+            throw new Exception("Error: No se pudo mover el archivo al directorio de almacenamiento.");
+        }
+
+        // Insertar en la base de datos con Prepared Statement
+        $stmt = $conn->prepare("INSERT INTO archivos (nombre, conflicto, descripcion, archivo, lugar, fecha, formato_id) 
+                                VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssssi", $nombre, $conflicto, $descripcion, $rutaArchivo, $lugar, $fecha, $formato_id);
+        $stmt->execute();
+        $archivo_id = $stmt->insert_id;
+        $stmt->close();
+
+        // Registrar la acción en la tabla `acciones`
+        $stmtAccion = $conn->prepare("INSERT INTO acciones (archivo_id, accion) VALUES (?, 'crear')");
+        $stmtAccion->bind_param("i", $archivo_id);
+        $stmtAccion->execute();
+        $stmtAccion->close();
+
+       
+
+    } catch (Exception $e) {
+        echo htmlspecialchars($e->getMessage()); // Evita XSS en errores
     }
 }
 
-$conexion->close();
+// Cerrar conexión
+mysqli_close($conn);
 ?>

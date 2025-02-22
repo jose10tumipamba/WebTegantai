@@ -1,48 +1,35 @@
-CREATE DATABASE system_TLC;
-USE system_TLC;
+CREATE DATABASE system_tlc;
+USE system_tlc;
 
--- Tabla principal: Archivos (Información general)
-CREATE TABLE IF NOT EXISTS archivosTLC (
+-- Tabla para los tipos de archivo (formatos)
+CREATE TABLE formatos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tipo VARCHAR(50) NOT NULL UNIQUE  -- Asegura que no haya tipos repetidos (ej. "imagen" solo una vez)
+);
+
+-- Tabla para los archivos multimedia
+CREATE TABLE archivos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL,
-    conflicto VARCHAR(255) NOT NULL,
-    descripcion TEXT NOT NULL,
-    lugar VARCHAR(255) NOT NULL,
-    fecha DATE NOT NULL  -- Permite ingreso manual de la fecha
+    conflicto TEXT,
+    descripcion TEXT,
+    archivo VARCHAR(255) NOT NULL,  -- Ruta única del archivo
+    lugar VARCHAR(255),
+    fecha DATE,  -- Fecha que se ingresará manualmente
+    formato_id INT,  -- Relacionado con la tabla formatos
+    FOREIGN KEY (formato_id) REFERENCES formatos(id) ON DELETE CASCADE,
+    
+    -- Restricción para evitar archivos duplicados
+    UNIQUE (archivo, nombre, conflicto, descripcion, lugar, fecha, formato_id)
 );
-ALTER TABLE archivosTLC ADD COLUMN archivo TEXT NOT NULL;
 
-
--- Tabla de Formatos (Define los tipos de archivo)
-CREATE TABLE IF NOT EXISTS formatoTLC (
+-- Tabla para registrar las acciones realizadas sobre los archivos
+CREATE TABLE acciones (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tipo VARCHAR(50) NOT NULL UNIQUE COMMENT 'Ejemplo: imagen, video, audio, documento'
+    archivo_id INT,  -- Relacionado con la tabla archivos
+    accion ENUM('crear', 'modificar', 'eliminar') NOT NULL,  -- Solo permite estos valores
+    fecha_accion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (archivo_id) REFERENCES archivos(id) ON DELETE CASCADE
 );
 
--- Tabla de Multimedia (Relaciona archivos con su formato)
-CREATE TABLE IF NOT EXISTS multimediaTLC (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    archivo_id INT,
-    formato_id INT,
-    ruta TEXT NOT NULL, -- Cambiado a TEXT si las rutas son largas
-    FOREIGN KEY (archivo_id) REFERENCES archivosTLC(id) ON DELETE CASCADE,
-    FOREIGN KEY (formato_id) REFERENCES formatoTLC(id) ON DELETE CASCADE
-);
-
--- Tabla CRUD (Registra acciones en la base de datos)
-CREATE TABLE IF NOT EXISTS crudTLC (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    archivo_id INT,
-    accion VARCHAR(50) NOT NULL COMMENT 'crear, modificar, eliminar',
-    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (archivo_id) REFERENCES archivosTLC(id) ON DELETE CASCADE
-);
-
--- Inserción de valores iniciales para formatos de archivo
-INSERT INTO formatoTLC (tipo) VALUES 
-('imagen'),
-('video'),
-('audio'),
-('documento'),
-('link')
-ON DUPLICATE KEY UPDATE tipo = tipo;
+INSERT INTO formatos (tipo) VALUES ('imagen'), ('video'), ('audio'), ('documento'), ('enlace');

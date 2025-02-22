@@ -13,11 +13,10 @@ if (!isset($_SESSION["usuario"])) {
     <title>Administración TLC</title>
     <link rel="stylesheet" href="TLC.css">
     <script src="scriptTLC.js"></script>
-
 </head>
 <body>
     <header>
-        <h1>Administración TLC</h1>
+        <h1><img class="logo" src="../img/logo-Tegantai.png" alt="Tegantai">Tratado de Libre Comercio</h1>
         <a href="../../home/logout.php" class="logout-btn">Cerrar sesión</a>
     </header>
 
@@ -36,47 +35,33 @@ if (!isset($_SESSION["usuario"])) {
 
     <div class="menu-secundario">
         <button class="tab-btn" onclick="location.href='adminTLC.php'">TLC</button>
-        <button class="tab-btn" onclick="location.href='../Pro/MINERIA.php'">MINERÍA</button>
-        <button class="tab-btn" onclick="location.href='../Proyecto_3/YASUNI.php'">YASUNÍ</button>
+        <button class="tab-btn" onclick="location.href='../MINERIA/adminMIN.php'">MINERÍA</button>
+        <button class="tab-btn" onclick="location.href='../YASUNI/adminYAS.php'">YASUNÍ</button>
     </div>
 
     <main>
         <h2><center>Subir Archivo</center></h2>
-        <form id="formSubida" class="formulario-subida" enctype="multipart/form-data">
+        <form id="formSubida" class="formulario-subida" action="subirTLC.php" method="POST" enctype="multipart/form-data" onsubmit="recargarDespuesDeEnviar()">
             <input type="text" name="nombre" placeholder="Nombre" required>
             <input type="text" name="conflicto" placeholder="Conflicto" required>
             <textarea name="descripcion" placeholder="Descripción" required></textarea>
             <input type="text" name="lugar" placeholder="Lugar" required>
             <input type="date" name="fecha" required>
             <select name="formato">
-                <option value="imagen">Imagen</option>
-                <option value="video">Video</option>
-                <option value="audio">Audio</option>
-                <option value="documento">Documento</option>
+                <option value="1">Imagen</option>
+                <option value="2">Video</option>
+                <option value="3">Audio</option>
+                <option value="4">Documento</option>
             </select>
             <input type="file" name="archivo" required>
             <button type="submit" class="boton">Subir Archivo</button>
         </form>
-
         <p id="mensaje"></p>
-
-        <h3><center>Archivos Subidos</center></h3>
-        <table id="tablaArchivos">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Conflicto</th>
-                    <th>Descripción</th>
-                    <th>Lugar</th>
-                    <th>Fecha</th>
-                    <th>Acción</th>
-                </tr>
-            </thead>
-            <tbody id="contenidoTabla">
-                <?php include 'listarTLC.php'; ?>
-            </tbody>
-        </table>
+        <tbody id="contenidoTabla">
+            <?php include 'listarTLC.php'; ?>
+        </tbody>
     </main>
 
+    <script src="scriptTLC.js"></script>
 </body>
 </html>

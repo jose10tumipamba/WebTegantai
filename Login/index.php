@@ -8,6 +8,12 @@
 </head>
 <body>
     <div class="container">
+        <!-- Logo -->
+        <div class="logo">
+            <img src="img/tegantai.png" alt="Tegantai">
+        </div>
+
+        <!-- Formulario -->
         <div class="form-container">
             <!-- Formulario de Inicio de Sesión -->
             <form id="loginForm">
@@ -15,7 +21,7 @@
                 <input type="text" id="loginUsuario" name="usuario" placeholder="Usuario" required>
                 <input type="password" id="loginPassword" name="password" placeholder="Contraseña" required>
                 <button type="button" id="btnLogin">Ingresar</button>
-                <p>¿No tienes cuenta? <a href="#" onclick="toggleForms()">Regístrate</a></p>
+                <p><br>¿No tienes cuenta? <a href="#" onclick="toggleForms()">Regístrate</a></p>
             </form>
 
             <!-- Formulario de Registro -->
@@ -25,7 +31,7 @@
                 <input type="email" id="regEmail" name="email" placeholder="Correo Electrónico" required>
                 <input type="password" id="regPassword" name="password" placeholder="Contraseña" required>
                 <button type="button" id="btnRegister">Registrar</button>
-                <p>¿Ya tienes cuenta? <a href="#" onclick="toggleForms()">Inicia Sesión</a></p>
+                <p><br>¿Ya tienes cuenta? <a href="#" onclick="toggleForms()">Inicia Sesión</a></p>
             </form>
         </div>
     </div>

@@ -1,13 +1,12 @@
 <?php
-$host = "localhost";
-$user = "root"; 
-$pass = ""; 
-$dbname = "system_TLC"; 
+$servername = "localhost";
+$username = "root"; // Usuario por defecto de XAMPP
+$password = ""; // XAMPP no tiene contraseña por defecto
+$database = "system_tlc";
 
-// Usar la conexión global
-$conexion = new mysqli($host, $user, $pass, $dbname);
+$conn = new mysqli($servername, $username, $password, $database);
 
-if ($conexion->connect_error) {
-    die("Error de conexión: " . $conexion->connect_error);
+if ($conn->connect_error) {
+    die("Conexión fallida: " . $conn->connect_error);
 }
 ?>

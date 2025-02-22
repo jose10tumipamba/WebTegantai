@@ -1,48 +1,21 @@
 <?php
 include 'dbTLC.php';
 
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    die("ID no válido.");
-}
+// Verificar si se ha enviado el ID para eliminar
+if (isset($_GET['id'])) {
+    $id = intval($_GET['id']); // Sanitizar ID
 
-$id = intval($_GET['id']);
+    // Eliminar archivo de la base de datos
+    $query = "DELETE FROM archivos WHERE id = ?";
+    $stmt = mysqli_prepare($conn, $query);
+    mysqli_stmt_bind_param($stmt, 'i', $id);
 
-// Obtener la ruta del archivo antes de eliminarlo
-$stmt = $conn->prepare("SELECT ruta FROM multimediaTLC WHERE archivo_id = ?");
-$stmt->bind_param("i", $id);
-$stmt->execute();
-$result = $stmt->get_result();
-
-if ($row = $result->fetch_assoc()) {
-    $ruta = $row['ruta'];
-
-    // Eliminar el archivo del servidor
-    if (file_exists($ruta)) {
-        unlink($ruta);
-    }
-
-    // Eliminar de la base de datos
-    $stmt = $conn->prepare("DELETE FROM multimediaTLC WHERE archivo_id = ?");
-    $stmt->bind_param("i", $id);
-    
-    if ($stmt->execute()) {
-        echo "<script>
-                alert('Archivo eliminado con éxito.');
-                window.location.href = 'adminTLC.php';
-              </script>";
+    if (mysqli_stmt_execute($stmt)) {
+        echo "<script>alert('Archivo eliminado correctamente.'); window.location.href = 'adminTLC.php';</script>";
     } else {
-        echo "<script>
-                alert('Error al eliminar el archivo.');
-                window.location.href = 'adminTLC.php';
-              </script>";
+        echo "<script>alert('Error al eliminar el archivo.'); window.location.href = 'adminTLC.php';</script>";
     }
-} else {
-    echo "<script>
-            alert('Archivo no encontrado.');
-            window.location.href = 'adminTLC.php';
-          </script>";
 }
 
-$stmt->close();
-$conn->close();
+mysqli_close($conn);
 ?>

@@ -1,40 +1,76 @@
 <?php
-// Conexión a la base de datos
-$conexion = new mysqli('localhost', 'root', '', 'system_TLC');
-if ($conexion->connect_error) {
-    die("Conexión fallida: " . $conexion->connect_error);
+include 'dbTLC.php'; // Conexión a la base de datos
+
+// Consulta para obtener los archivos con su formato
+$query = "SELECT a.id, a.nombre, a.conflicto, a.descripcion, a.lugar, a.fecha, 
+                 f.tipo, a.archivo AS ruta    
+          FROM archivos a
+          LEFT JOIN formatos f ON a.formato_id = f.id";
+
+$result = mysqli_query($conn, $query);
+
+if (!$result) {
+    die('Error en la consulta: ' . mysqli_error($conn));
 }
-
-// Consulta para obtener los archivos
-$sql = "SELECT id, nombre, conflicto, descripcion, lugar, fecha FROM archivosTLC ORDER BY fecha DESC";
-$resultado = $conexion->query($sql);
-
-// Verificar si hay resultados
-if ($resultado->num_rows > 0) {
-    while ($row = $resultado->fetch_assoc()) {
-        echo "<tr>";
-        echo "<td>" . htmlspecialchars($row['nombre']) . "</td>";
-        echo "<td>" . htmlspecialchars($row['conflicto']) . "</td>";
-        echo "<td>" . htmlspecialchars($row['descripcion']) . "</td>";
-        echo "<td>" . htmlspecialchars($row['lugar']) . "</td>";
-        echo "<td>" . htmlspecialchars($row['fecha']) . "</td>";
-
-        // Columna de acciones con iconos
-        echo "<td>";
-        echo "<a href='editarTLC.php?id=" . $row['id'] . "' class='btn'><img src='img/editar.png' alt='Editar' class='icono'></a>";
-        echo "<a href='eliminarTLC.php?id=" . $row['id'] . "' onclick='return confirmarEliminacion()' class='btn eliminar-btn'><img src='img/eliminar.png' alt='Eliminar' class='icono'></a>";
-        echo "<a href='descargarTLC.php?id=" . $row['id'] . "' class='btn'><img src='img/descargar.png' alt='Descargar' class='icono'></a>";
-        echo "</td>";
-        echo "</tr>";
-    }
-} else {
-    echo "<tr><td colspan='6'>No se encontraron archivos.</td></tr>";
-}
-
-$conexion->close();
 ?>
-<script>
-function confirmarEliminacion() {
-    return confirm("¿Estás seguro de que deseas eliminar este archivo?");
-}
-</script>
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Archivos</title>
+    <link rel="stylesheet" href="TLC.css">
+    <script src="scriptTLC.js"></script>
+</head>
+<body>
+
+<table>
+    <tr>
+        <th>Nombre</th>
+        <th>Conflicto</th>
+        <th>Descripción</th>
+        <th>Lugar</th>
+        <th>Fecha</th>
+        <th>Formato</th>
+        <th>Archivo</th>
+        <th>Acciones</th>
+    </tr>
+    <?php while ($row = mysqli_fetch_assoc($result)) { ?>
+    <tr>
+        <td><?php echo htmlspecialchars($row['nombre']); ?></td>
+        <td><?php echo htmlspecialchars($row['conflicto']); ?></td>
+        <td><?php echo htmlspecialchars($row['descripcion']); ?></td>
+        <td><?php echo htmlspecialchars($row['lugar']); ?></td>
+        <td><?php echo htmlspecialchars($row['fecha']); ?></td>
+        <td><?php echo htmlspecialchars($row['tipo']); ?></td>
+        <td>
+            <?php if (!empty($row['ruta'])): ?>
+                <a href="<?php echo htmlspecialchars($row['ruta']); ?>" target="_blank">
+                    <img src="imgcrud/ojo.png" alt="Ver" class="icono">
+                </a>
+            <?php else: ?>
+                No disponible
+            <?php endif; ?>
+        </td>
+        <td>
+            <a href="editarTLC.php?id=<?php echo $row['id']; ?>">
+                <img src="imgcrud/editar.png" alt="Editar" class="icono">
+            </a> 
+            <a href="eliminarTLC.php?id=<?php echo $row['id']; ?>" class="eliminar-btn" onclick="return confirm('¿Eliminar archivo?');">
+                <img src="imgcrud/eliminar.png" alt="Eliminar" class="icono">
+            </a> 
+            <?php if (!empty($row['ruta'])): ?>
+                <a href="<?php echo htmlspecialchars($row['ruta']); ?>" download>
+                    <img src="imgcrud/descargar.png" alt="Descargar" class="icono">
+                </a>
+            <?php endif; ?>
+        </td>
+    </tr>
+    <?php } ?>
+</table>
+
+<?php mysqli_close($conn); ?>
+
+</body>
+</html>
